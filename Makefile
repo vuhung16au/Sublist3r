@@ -19,8 +19,8 @@ test:
 	@echo "Running test 1: python sublist3r.py -v -d google.com"
 	python sublist3r.py -v -d google.com
 	@echo ""
-	@echo "Running test 2: python sublist3r.py -v -d http://localhost:3000/"
-	python sublist3r.py -v -d http://localhost:3000/
+	@echo "Running test 2: python sublist3r.py -v -d example.com"
+	python sublist3r.py -v -d example.com
 
 del-env:
 	@echo "Removing virtual environment..."
