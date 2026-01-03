@@ -12,6 +12,7 @@ dependencies = [
     "dnspython",
     "requests",
     "rich",
+    "pyyaml",
 ]
 
 [project.scripts]

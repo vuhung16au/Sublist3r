@@ -1,0 +1,34 @@
+# Engine Configuration File
+# Enable or disable specific enumeration engines
+# Set enabled: false to disable an engine that is currently blocking requests
+
+engines:
+  baidu:
+    enabled: true
+  yahoo:
+    enabled: true
+  google:
+    enabled: false  # Disabled due to blocking
+  bing:
+    enabled: true
+  ask:
+    enabled: true
+  netcraft:
+    enabled: true
+  dnsdumpster:
+    enabled: true
+  virustotal:
+    enabled: false  # Disabled due to blocking
+  threatcrowd:
+    enabled: true
+  ssl:
+    enabled: true
+  passivedns:
+    enabled: true
+  duckduckgo:
+    enabled: true
+  alienvault:
+    enabled: true
+  otx:
+    enabled: true
+

@@ -86,7 +86,50 @@ Limit enumeration to specific engines (faster, but may miss results):
 python sublist3r.py -e google,yahoo,virustotal -d example.com
 ```
 
-Available engines: `google`, `yahoo`, `bing`, `baidu`, `ask`, `netcraft`, `virustotal`, `threatcrowd`, `dnsdumpster`, `ssl`, `passivedns`
+Available engines: `google`, `yahoo`, `bing`, `baidu`, `ask`, `netcraft`, `virustotal`, `threatcrowd`, `dnsdumpster`, `ssl`, `passivedns`, `duckduckgo`, `alienvault`, `otx`
+
+### Engine Configuration
+
+Sublist3r supports a configuration file to enable or disable specific engines. This is useful when certain engines are blocking requests (e.g., Google, Virustotal).
+
+**Using the default configuration file:**
+
+The default configuration file is located at `config/engines.yaml`. Edit this file to enable/disable engines:
+
+```yaml
+engines:
+  google:
+    enabled: false  # Disabled due to blocking
+  virustotal:
+    enabled: false  # Disabled due to blocking
+  yahoo:
+    enabled: true
+  # ... other engines
+```
+
+**Using a custom configuration file:**
+
+```bash
+python sublist3r.py -c /path/to/my_config.yaml -d example.com
+```
+
+**Configuration priority:**
+1. CLI argument `-e/--engines` (highest priority) - overrides config file
+2. Config file - engines marked as `enabled: false` are excluded
+3. Default - if no config file exists, all engines are enabled
+
+**Example: Disable problematic engines**
+
+Edit `config/engines.yaml` and set problematic engines to `enabled: false`:
+
+```yaml
+engines:
+  google:
+    enabled: false  # Currently blocking requests
+  virustotal:
+    enabled: false  # Currently blocking requests
+  # All other engines remain enabled
+```
 
 ### Adjust Thread Count
 
@@ -118,6 +161,12 @@ python sublist3r.py -d target.com -p 80,443 -o web_servers.txt
 python sublist3r.py -e google,virustotal,dnsdumpster -d target.com
 ```
 
+### 5. Using Configuration File
+```bash
+# Edit config/engines.yaml to disable problematic engines, then:
+python sublist3r.py -d target.com -o target_subdomains.txt
+```
+
 ## Command-Line Options
 
 | Short | Long | Description |
@@ -129,6 +178,7 @@ python sublist3r.py -e google,virustotal,dnsdumpster -d target.com
 | `-t` | `--threads` | Number of threads for subbrute bruteforce (default: 30) |
 | `-e` | `--engines` | Specify comma-separated list of search engines |
 | `-o` | `--output` | Save results to text file |
+| `-c` | `--config` | Path to engine configuration file (YAML format) |
 | `-n` | `--no-color` | Output without color |
 | `-h` | `--help` | Show help message |
 
@@ -151,7 +201,8 @@ This will run two test commands:
 3. **Use bruteforce** (`-b`) for comprehensive discovery, but note it takes longer
 4. **Port scanning** (`-p`) helps identify active services quickly
 5. **Specific engines** (`-e`) can speed up enumeration if you know which sources work best for your target
-6. **Increase threads** (`-t`) for faster bruteforce, but be mindful of rate limits
+6. **Use configuration file** (`config/engines.yaml`) to disable engines that are currently blocking requests (e.g., Google, Virustotal)
+7. **Increase threads** (`-t`) for faster bruteforce, but be mindful of rate limits
 
 ## Cleanup
 
@@ -190,6 +241,10 @@ python sublist3r.py -v -b -d example.com -o example_subdomains_full.txt
 
 # 4. Check for web servers
 python sublist3r.py -d example.com -p 80,443 -o example_web_servers.txt
+
+# 5. Use configuration file to disable problematic engines
+# Edit config/engines.yaml first, then:
+python sublist3r.py -v -d example.com -o example_subdomains.txt
 ```
 
 ## Troubleshooting
@@ -198,6 +253,8 @@ python sublist3r.py -d example.com -p 80,443 -o example_web_servers.txt
 - **Slow performance**: Reduce thread count (`-t`) or use specific engines (`-e`)
 - **Import errors**: Make sure the virtual environment is activated and dependencies are installed
 - **Permission errors**: Ensure you have write permissions for output files
+- **Engine blocking errors**: If you see errors like "Google probably now is blocking our requests", edit `config/engines.yaml` and set that engine to `enabled: false`
+- **Config file not found**: If you get config-related warnings, the tool will use all engines by default. Create `config/engines.yaml` to customize engine selection
 
 ## Next Steps
 

@@ -21,7 +21,7 @@ Sublist3r requires **Python 3.12 or higher**.
 
 ## Dependencies:
 
-Sublist3r depends on the `requests` and `dnspython` python modules.
+Sublist3r depends on the `requests`, `dnspython`, `rich`, and `pyyaml` python modules.
 
 These dependencies can be installed using the project's `pyproject.toml`:
 
@@ -98,6 +98,8 @@ Short Form    | Long Form     | Description
 -t            | --threads     | Number of threads to use for subbrute bruteforce
 -e            | --engines     | Specify a comma-separated list of search engines
 -o            | --output      | Save the results to text file
+-c            | --config      | Path to engine configuration file (YAML format)
+-n            | --no-color    | Output without color
 -h            | --help        | show the help message and exit
 
 ### Examples
@@ -126,6 +128,67 @@ Short Form    | Long Form     | Description
 
 ``python sublist3r.py -e google,yahoo,virustotal -d example.com``
 
+* To use a custom configuration file to enable/disable engines:
+
+``python sublist3r.py -c /path/to/config.yaml -d example.com``
+
+## Engine Configuration
+
+Sublist3r supports configuration files to enable or disable specific enumeration engines. This is useful when certain engines are blocking requests or you want to customize which engines are used by default.
+
+### Configuration File Format
+
+The configuration file uses YAML format and should be located at `config/engines.yaml` (relative to the script) or specified with the `--config` option.
+
+Example `config/engines.yaml`:
+
+```yaml
+engines:
+  baidu:
+    enabled: true
+  yahoo:
+    enabled: true
+  google:
+    enabled: false  # Disabled due to blocking
+  bing:
+    enabled: true
+  ask:
+    enabled: true
+  netcraft:
+    enabled: true
+  dnsdumpster:
+    enabled: true
+  virustotal:
+    enabled: false  # Disabled due to blocking
+  threatcrowd:
+    enabled: true
+  ssl:
+    enabled: true
+  passivedns:
+    enabled: true
+  duckduckgo:
+    enabled: true
+  alienvault:
+    enabled: true
+  otx:
+    enabled: true
+```
+
+### Configuration Priority
+
+1. **CLI argument `-e/--engines`** (highest priority) - If specified, only the listed engines will be used
+2. **Config file** (`config/engines.yaml` or custom via `--config`) - Engines marked as `enabled: false` will be excluded
+3. **Default** - If no config file exists, all engines are enabled by default
+
+### Available Engine Names
+
+- `baidu`, `yahoo`, `google`, `bing`, `ask` - Search engines
+- `netcraft`, `dnsdumpster`, `virustotal`, `threatcrowd` - OSINT sources
+- `ssl` - SSL Certificate search (crt.sh)
+- `passivedns` - PassiveDNS API
+- `duckduckgo` - DuckDuckGo search
+- `alienvault`, `otx` - AlienVault OTX (both names refer to the same engine)
+
 
 ## Using Sublist3r as a module in your python scripts
 
@@ -139,12 +202,14 @@ The main function will return a set of unique subdomains found by Sublist3r
 
 **Function Usage:**
 * **domain**: The domain you want to enumerate subdomains of.
+* **threads**: Number of threads for bruteforce operations.
 * **savefile**: save the output into text file.
-* **ports**: specify a comma-sperated list of the tcp ports to scan.
+* **ports**: specify a comma-separated list of the tcp ports to scan.
 * **silent**: set sublist3r to work in silent mode during the execution (helpful when you don't need a lot of noise).
 * **verbose**: display the found subdomains in real time.
 * **enable_bruteforce**: enable the bruteforce module.
-* **engines**: (Optional) to choose specific engines.
+* **engines**: (Optional) to choose specific engines (comma-separated string).
+* **config_path**: (Optional) path to engine configuration file (YAML format).
 
 Example to enumerate subdomains of Yahoo.com:
 ```python
