@@ -19,7 +19,7 @@ Sublist3r enumerates subdomains using:
 
 1. **Clone the repository** (if you haven't already):
    ```bash
-   git clone https://github.com/aboul3la/Sublist3r.git
+   git clone https://github.com/vuhung16au/Sublist3r.git
    cd Sublist3r
    ```
 

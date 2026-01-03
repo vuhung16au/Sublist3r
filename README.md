@@ -12,7 +12,7 @@ Sublist3r is a python tool designed to enumerate subdomains of websites using OS
 ## Installation
 
 ```
-git clone https://github.com/aboul3la/Sublist3r.git
+git clone https://github.com/vuhung16au/Sublist3r.git
 ```
 
 ## Recommended Python Version:
@@ -154,7 +154,7 @@ subdomains = sublist3r.main('yahoo.com', 40, 'yahoo_subdomains.txt', ports= None
 
 ## License
 
-Sublist3r is licensed under the GNU GPL license. take a look at the [LICENSE](https://github.com/aboul3la/Sublist3r/blob/master/LICENSE) for more information.
+Sublist3r is licensed under the GNU GPL license. take a look at the [LICENSE](https://github.com/vuhung16au/Sublist3r/blob/master/LICENSE) for more information.
 
 
 ## Credits
