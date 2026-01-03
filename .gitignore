@@ -5,3 +5,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Project specific
+Prompt.md
