@@ -73,7 +73,7 @@ def banner():
                  ___) | |_| | |_) | | \__ \ |_ ___) | |
                 |____/ \__,_|_.__/|_|_|___/\__|____/|_|%s%s
 
-                # Coded By Ahmed Aboul-Ela - @aboul3la
+                # Coded By Ahmed Aboul-Ela - @aboul3la, revived by @vuhung16au
     """ % (R, W, Y))
 
 
