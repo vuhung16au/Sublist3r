@@ -64,20 +64,24 @@ def get_enabled_engines(config_data=None):
                      Format: {'engines': {'engine_name': {'enabled': True/False}}}
     
     Returns:
-        List of engine classes that are enabled
+        List of engine classes that are enabled (unique classes only)
     """
     if config_data is None or 'engines' not in config_data:
         # No config or invalid config - return all engines
         return ALL_ENGINES
     
     enabled_engines = []
+    seen_classes = set()  # Track unique engine classes
     engines_config = config_data.get('engines', {})
     
     for engine_name, engine_class in ENGINE_REGISTRY.items():
         engine_config = engines_config.get(engine_name, {})
         # Default to enabled if not specified
         if engine_config.get('enabled', True):
-            enabled_engines.append(engine_class)
+            # Only add if we haven't seen this class before (handles aliases like 'alienvault' and 'otx')
+            if engine_class not in seen_classes:
+                enabled_engines.append(engine_class)
+                seen_classes.add(engine_class)
     
     return enabled_engines if enabled_engines else ALL_ENGINES
 
