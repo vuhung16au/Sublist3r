@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 # Sublist3r v1.0
 # By Ahmed Aboul-Ela - twitter.com/aboul3la
@@ -21,14 +21,8 @@ from collections import Counter
 from subbrute import subbrute
 import dns.resolver
 import requests
-
-# Python 2.x and 3.x compatiablity
-if sys.version > '3':
-    import urllib.parse as urlparse
-    import urllib.parse as urllib
-else:
-    import urlparse
-    import urllib
+import urllib.parse as urlparse
+import urllib.parse as urllib
 
 # In case you cannot install some of the required development packages
 # there's also an option to disable the SSL warning:
@@ -140,7 +134,7 @@ def subdomain_sorting_key(hostname):
     return parts, 0
 
 
-class enumratorBase(object):
+class enumratorBase:
     def __init__(self, base_url, engine_name, domain, subdomains=None, silent=False, verbose=True):
         subdomains = subdomains or []
         self.domain = urlparse.urlparse(domain).netloc
@@ -552,7 +546,7 @@ class NetcraftEnum(enumratorBaseThreaded):
         cookies_list = cookie[0:cookie.find(';')].split("=")
         cookies[cookies_list[0]] = cookies_list[1]
         # hashlib.sha1 requires utf-8 encoded str
-        cookies['netcraft_js_verification_response'] = hashlib.sha1(urllib.unquote(cookies_list[1]).encode('utf-8')).hexdigest()
+        cookies['netcraft_js_verification_response'] = hashlib.sha1(urlparse.unquote(cookies_list[1]).encode('utf-8')).hexdigest()
         return cookies
 
     def get_cookies(self, headers):
@@ -611,7 +605,7 @@ class DNSdumpster(enumratorBaseThreaded):
         Resolver.nameservers = ['8.8.8.8', '8.8.4.4']
         self.lock.acquire()
         try:
-            ip = Resolver.query(host, 'A')[0].to_text()
+            ip = Resolver.resolve(host, 'A')[0].to_text()
             if ip:
                 if self.verbose:
                     self.print_("%s%s: %s%s" % (R, self.engine_name, W, host))

@@ -45,46 +45,46 @@ Alternatively, each module can be installed independently as shown below.
 
 - Install for Windows:
 ```
-c:\python27\python.exe -m pip install requests
+python -m pip install requests
 ```
 
 - Install for Ubuntu/Debian:
 ```
-sudo apt-get install python-requests
+sudo apt-get install python3-requests
 ```
 
 - Install for Centos/Redhat:
 ```
-sudo yum install python-requests
+sudo yum install python3-requests
 ```
 
 - Install using pip on Linux:
 ```
-sudo pip install requests
+pip install requests
 ```
 
 #### dnspython Module (http://www.dnspython.org/)
 
 - Install for Windows:
 ```
-c:\python27\python.exe -m pip install dnspython
+python -m pip install dnspython
 ```
 
 - Install for Ubuntu/Debian:
 ```
-sudo apt-get install python-dnspython
+sudo apt-get install python3-dnspython
 ```
 
 - Install using pip:
 ```
-sudo pip install dnspython
+pip install dnspython
 ```
 
 **Note:** `argparse` is included in Python 3.12+ standard library and does not need to be installed separately.
 
-**for coloring in windows install the following libraries**
+**For coloring in Windows, install the following libraries:**
 ```
-c:\python27\python.exe -m pip install win_unicode_console colorama
+python -m pip install win_unicode_console colorama
 ```
 
 ## Usage
