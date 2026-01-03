@@ -25,6 +25,13 @@ import queue as Queue
 #The 'multiprocessing' library does not rely upon a Global Interpreter Lock (GIL)
 import multiprocessing
 
+# Try to import ui_styles for Rich console support
+try:
+    import ui_styles
+    _has_rich = True
+except ImportError:
+    _has_rich = False
+
 #Microsoft compatiablity
 if  sys.platform.startswith('win'):
     #Drop-in replacement,  subbrute + multiprocessing throws exceptions on windows.
@@ -412,7 +419,17 @@ def print_target(target, record_type = None, subdomains = "names.txt", resolve_l
             result = "%s,%s" % (hostname, ",".join(response).strip(","))
         if result not in found_subdomains:
             if verbose:
-                print(result)
+                if _has_rich:
+                    try:
+                        console = ui_styles.get_console()
+                        if console:
+                            console.print(f"[{ui_styles.UIStyles.SOURCE}]SubBrute[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{result}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            print(result)
+                    except:
+                        print(result)
+                else:
+                    print(result)
             subdomains_list.append(result)
 
     return  set(subdomains_list)

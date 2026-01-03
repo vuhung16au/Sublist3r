@@ -23,6 +23,10 @@ import dns.resolver
 import requests
 import urllib.parse as urlparse
 import urllib.parse as urllib
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from rich.table import Table
+import ui_styles
 
 # In case you cannot install some of the required development packages
 # there's also an option to disable the SSL warning:
@@ -35,52 +39,43 @@ except:
 # Check if we are running this on windows platform
 is_windows = sys.platform.startswith('win')
 
-# Console Colors
-if is_windows:
-    # Windows deserves coloring too :D
-    G = '\033[92m'  # green
-    Y = '\033[93m'  # yellow
-    B = '\033[94m'  # blue
-    R = '\033[91m'  # red
-    W = '\033[0m'   # white
-    try:
-        import win_unicode_console , colorama
-        win_unicode_console.enable()
-        colorama.init()
-        #Now the unicode will work ^_^
-    except:
-        print("[!] Error: Coloring libraries not installed, no coloring will be used [Check the readme]")
-        G = Y = B = R = W = G = Y = B = R = W = ''
-
-
-else:
-    G = '\033[92m'  # green
-    Y = '\033[93m'  # yellow
-    B = '\033[94m'  # blue
-    R = '\033[91m'  # red
-    W = '\033[0m'   # white
+# Global Rich console instance - initialized in interactive() function
+console = None
 
 def no_color():
-    global G, Y, B, R, W
-    G = Y = B = R = W = ''
+    """Disable colors in console output."""
+    global console
+    console = Console(no_color=True, force_terminal=True)
+    ui_styles.set_console(console)
 
 
 def banner():
-    print(r"""%s
+    """Display Sublist3r banner using Rich."""
+    banner_ascii = r"""
                  ____        _     _ _     _   _____
                 / ___| _   _| |__ | (_)___| |_|___ / _ __
                 \___ \| | | | '_ \| | / __| __| |_ \| '__|
                  ___) | |_| | |_) | | \__ \ |_ ___) | |
-                |____/ \__,_|_.__/|_|_|___/\__|____/|_|%s%s
-
-                # Coded By Ahmed Aboul-Ela - @aboul3la, revived by @vuhung16au
-    """ % (R, W, Y))
+                |____/ \__,_|_.__/|_|_|___/\__|____/|_|
+    """
+    subtitle = "# Coded By Ahmed Aboul-Ela - @aboul3la, revived by @vuhung16au"
+    
+    if console:
+        console.print(banner_ascii, style=ui_styles.UIStyles.BANNER)
+        console.print(subtitle, style=ui_styles.UIStyles.BANNER_SUBTITLE)
+    else:
+        print(banner_ascii)
+        print(subtitle)
 
 
 def parser_error(errmsg):
     banner()
-    print("Usage: python " + sys.argv[0] + " [Options] use -h for help")
-    print(R + "Error: " + errmsg + W)
+    if console:
+        console.print("Usage: python " + sys.argv[0] + " [Options] use -h for help")
+        console.print(f"[{ui_styles.UIStyles.ERROR}]Error:[/{ui_styles.UIStyles.ERROR}] {errmsg}")
+    else:
+        print("Usage: python " + sys.argv[0] + " [Options] use -h for help")
+        print("Error: " + errmsg)
     sys.exit()
 
 
@@ -102,7 +97,10 @@ def parse_args():
 
 def write_file(filename, subdomains):
     # saving subdomains results to output file
-    print("%s[-] Saving results to file: %s%s%s%s" % (Y, W, R, filename, W))
+    if console:
+        console.print(f"[{ui_styles.UIStyles.WARNING}][-][/{ui_styles.UIStyles.WARNING}] Saving results to file: [{ui_styles.UIStyles.ERROR}]{filename}[/{ui_styles.UIStyles.ERROR}]")
+    else:
+        print(f"[-] Saving results to file: {filename}")
     with open(str(filename), 'wt') as f:
         for subdomain in subdomains:
             f.write(subdomain + os.linesep)
@@ -155,12 +153,18 @@ class enumratorBase:
 
     def print_(self, text):
         if not self.silent:
-            print(text)
+            if console:
+                console.print(text)
+            else:
+                print(text)
         return
 
     def print_banner(self):
         """ subclass can override this if they want a fancy banner :)"""
-        self.print_(G + "[-] Searching now in %s.." % (self.engine_name) + W)
+        if console:
+            self.print_(f"[{ui_styles.UIStyles.SUCCESS}][-][/{ui_styles.UIStyles.SUCCESS}] Searching now in [{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]..")
+        else:
+            self.print_(f"[-] Searching now in {self.engine_name}..")
         return
 
     def send_req(self, query, page_no=1):
@@ -287,7 +291,10 @@ class GoogleEnum(enumratorBaseThreaded):
                 subdomain = urlparse.urlparse(link).netloc
                 if subdomain and subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -295,8 +302,12 @@ class GoogleEnum(enumratorBaseThreaded):
 
     def check_response_errors(self, resp):
         if isinstance(resp, str) and 'Our systems have detected unusual traffic' in resp:
-            self.print_(R + "[!] Error: Google probably now is blocking our requests" + W)
-            self.print_(R + "[~] Finished now the Google Enumeration ..." + W)
+            if console:
+                self.print_(f"[{ui_styles.UIStyles.ERROR}][!] Error:[/{ui_styles.UIStyles.ERROR}] Google probably now is blocking our requests")
+                self.print_(f"[{ui_styles.UIStyles.ERROR}][~] Finished now the Google Enumeration ...[/{ui_styles.UIStyles.ERROR}]")
+            else:
+                self.print_("[!] Error: Google probably now is blocking our requests")
+                self.print_("[~] Finished now the Google Enumeration ...")
             return False
         return True
 
@@ -342,7 +353,10 @@ class YahooEnum(enumratorBaseThreaded):
                     continue
                 if subdomain and subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -387,7 +401,10 @@ class AskEnum(enumratorBaseThreaded):
                 subdomain = urlparse.urlparse(link).netloc
                 if subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -436,7 +453,10 @@ class BingEnum(enumratorBaseThreaded):
                 subdomain = urlparse.urlparse(link).netloc
                 if subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -482,7 +502,10 @@ class BaiduEnum(enumratorBaseThreaded):
                     if subdomain not in self.subdomains and subdomain != self.domain:
                         found_newdomain = True
                         if self.verbose:
-                            self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                            if console:
+                                self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                            else:
+                                self.print_(f"{self.engine_name}: {subdomain}")
                         self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -581,7 +604,10 @@ class NetcraftEnum(enumratorBaseThreaded):
                     continue
                 if subdomain and subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -608,7 +634,10 @@ class DNSdumpster(enumratorBaseThreaded):
             ip = Resolver.resolve(host, 'A')[0].to_text()
             if ip:
                 if self.verbose:
-                    self.print_("%s%s: %s%s" % (R, self.engine_name, W, host))
+                    if console:
+                        self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{host}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                    else:
+                        self.print_(f"{self.engine_name}: {host}")
                 is_valid = True
                 self.live_subdomains.append(host)
         except:
@@ -644,7 +673,10 @@ class DNSdumpster(enumratorBaseThreaded):
         token = self.get_csrftoken(resp)
         if token is None:
             if self.verbose:
-                self.print_(R + "[!] Error: Could not retrieve CSRF token from DNSdumpster" + W)
+                if console:
+                    self.print_(f"[{ui_styles.UIStyles.ERROR}][!] Error:[/{ui_styles.UIStyles.ERROR}] Could not retrieve CSRF token from DNSdumpster")
+                else:
+                    self.print_("[!] Error: Could not retrieve CSRF token from DNSdumpster")
             return self.live_subdomains
         params = {'csrfmiddlewaretoken': token, 'targetip': self.domain}
         post_resp = self.req('POST', self.base_url, params)
@@ -700,7 +732,10 @@ class Virustotal(enumratorBaseThreaded):
             resp = self.send_req(self.url)
             resp = json.loads(resp)
             if 'error' in resp:
-                self.print_(R + "[!] Error: Virustotal probably now is blocking our requests" + W)
+                if console:
+                    self.print_(f"[{ui_styles.UIStyles.ERROR}][!] Error:[/{ui_styles.UIStyles.ERROR}] Virustotal probably now is blocking our requests")
+                else:
+                    self.print_("[!] Error: Virustotal probably now is blocking our requests")
                 break
             if 'links' in resp and 'next' in resp['links']:
                 self.url = resp['links']['next']
@@ -719,7 +754,10 @@ class Virustotal(enumratorBaseThreaded):
                         continue
                     if subdomain not in self.subdomains and subdomain != self.domain:
                         if self.verbose:
-                            self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                            if console:
+                                self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                            else:
+                                self.print_(f"{self.engine_name}: {subdomain}")
                         self.subdomains.append(subdomain.strip())
         except Exception:
             pass
@@ -757,7 +795,10 @@ class ThreatCrowd(enumratorBaseThreaded):
                     continue
                 if subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception as e:
             pass
@@ -808,10 +849,16 @@ class CrtSearch(enumratorBaseThreaded):
 
                     if subdomain not in self.subdomains and subdomain != self.domain:
                         if self.verbose:
-                            self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                            if console:
+                                self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                            else:
+                                self.print_(f"{self.engine_name}: {subdomain}")
                         self.subdomains.append(subdomain.strip())
         except Exception as e:
-            print(e)
+            if console:
+                console.print(f"[{ui_styles.UIStyles.ERROR}]{e}[/{ui_styles.UIStyles.ERROR}]")
+            else:
+                print(e)
             pass
 
 class PassiveDNS(enumratorBaseThreaded):
@@ -846,7 +893,10 @@ class PassiveDNS(enumratorBaseThreaded):
             for subdomain in subdomains:
                 if subdomain not in self.subdomains and subdomain != self.domain:
                     if self.verbose:
-                        self.print_("%s%s: %s%s" % (R, self.engine_name, W, subdomain))
+                        if console:
+                            self.print_(f"[{ui_styles.UIStyles.SOURCE}]{self.engine_name}[/{ui_styles.UIStyles.SOURCE}]: [{ui_styles.UIStyles.SUBDOMAIN}]{subdomain}[/{ui_styles.UIStyles.SUBDOMAIN}]")
+                        else:
+                            self.print_(f"{self.engine_name}: {subdomain}")
                     self.subdomains.append(subdomain.strip())
         except Exception as e:
             pass
@@ -873,7 +923,10 @@ class portscan():
                 pass
         self.lock.release()
         if len(openports) > 0:
-            print("%s%s%s - %sFound open ports:%s %s%s%s" % (G, host, W, R, W, Y, ', '.join(openports), W))
+            if console:
+                console.print(f"[{ui_styles.UIStyles.SUCCESS}]{host}[/{ui_styles.UIStyles.SUCCESS}] - [{ui_styles.UIStyles.ERROR}]Found open ports:[/{ui_styles.UIStyles.ERROR}] [{ui_styles.UIStyles.PORT}]{', '.join(openports)}[/{ui_styles.UIStyles.PORT}]")
+            else:
+                print(f"{host} - Found open ports: {', '.join(openports)}")
 
     def run(self):
         self.lock = threading.BoundedSemaphore(value=20)
@@ -899,7 +952,10 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
     domain_check = re.compile(r"^(http|https)?[a-zA-Z0-9]+([\-\.]{1}[a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$")
     if not domain_check.match(domain):
         if not silent:
-            print(R + "Error: Please enter a valid domain" + W)
+            if console:
+                console.print(f"[{ui_styles.UIStyles.ERROR}]Error: Please enter a valid domain[/{ui_styles.UIStyles.ERROR}]")
+            else:
+                print("Error: Please enter a valid domain")
         return []
 
     if not domain.startswith('http://') or not domain.startswith('https://'):
@@ -908,10 +964,14 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
     parsed_domain = urlparse.urlparse(domain)
 
     if not silent:
-        print(B + "[-] Enumerating subdomains now for %s" % parsed_domain.netloc + W)
+        if console:
+            console.print(f"[{ui_styles.UIStyles.INFO}][-] Enumerating subdomains now for {parsed_domain.netloc}[/{ui_styles.UIStyles.INFO}]")
 
     if verbose and not silent:
-        print(Y + "[-] verbosity is enabled, will show the subdomains results in realtime" + W)
+        if console:
+            console.print(f"[{ui_styles.UIStyles.WARNING}][-] verbosity is enabled, will show the subdomains results in realtime[/{ui_styles.UIStyles.WARNING}]")
+        else:
+            print("[-] verbosity is enabled, will show the subdomains results in realtime")
 
     supported_engines = {'baidu': BaiduEnum,
                          'yahoo': YahooEnum,
@@ -940,12 +1000,35 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
             if engine.lower() in supported_engines:
                 chosenEnums.append(supported_engines[engine.lower()])
 
-    # Start the engines enumeration
+    # Start the engines enumeration with progress tracking
     enums = [enum(domain, [], q=subdomains_queue, silent=silent, verbose=verbose) for enum in chosenEnums]
-    for enum in enums:
-        enum.start()
-    for enum in enums:
-        enum.join()
+    
+    if not silent and console:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console
+        ) as progress:
+            task = progress.add_task("[cyan]Enumerating subdomains...", total=len(enums))
+            
+            # Start all enumeration processes
+            for enum in enums:
+                enum.start()
+            
+            # Wait for all to complete and update progress
+            completed = 0
+            for enum in enums:
+                enum.join()
+                completed += 1
+                progress.update(task, completed=completed)
+    else:
+        # Fallback without progress bar
+        for enum in enums:
+            enum.start()
+        for enum in enums:
+            enum.join()
 
     subdomains = set(subdomains_queue)
     for subdomain in subdomains:
@@ -953,7 +1036,10 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
 
     if enable_bruteforce:
         if not silent:
-            print(G + "[-] Starting bruteforce module now using subbrute.." + W)
+            if console:
+                console.print(f"[{ui_styles.UIStyles.SUCCESS}][-] Starting bruteforce module now using subbrute..[/{ui_styles.UIStyles.SUCCESS}]")
+            else:
+                print("[-] Starting bruteforce module now using subbrute..")
         record_type = False
         path_to_file = os.path.dirname(os.path.realpath(__file__))
         subs = os.path.join(path_to_file, 'subbrute', 'names.txt')
@@ -972,22 +1058,37 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
             write_file(savefile, subdomains)
 
         if not silent:
-            print(Y + "[-] Total Unique Subdomains Found: %s" % len(subdomains) + W)
+            if console:
+                console.print(f"[{ui_styles.UIStyles.WARNING}][-] Total Unique Subdomains Found: {len(subdomains)}[/{ui_styles.UIStyles.WARNING}]")
+            else:
+                print(f"[-] Total Unique Subdomains Found: {len(subdomains)}")
 
         if ports:
             if not silent:
-                print(G + "[-] Start port scan now for the following ports: %s%s" % (Y, ports) + W)
+                if console:
+                    console.print(f"[{ui_styles.UIStyles.SUCCESS}][-] Start port scan now for the following ports: [{ui_styles.UIStyles.PORT}]{ports}[/{ui_styles.UIStyles.PORT}][/{ui_styles.UIStyles.SUCCESS}]")
+                else:
+                    print(f"[-] Start port scan now for the following ports: {ports}")
             ports = ports.split(',')
             pscan = portscan(subdomains, ports)
             pscan.run()
 
         elif not silent:
-            for subdomain in subdomains:
-                print(G + subdomain + W)
+            # Display subdomains in a Rich table
+            if console:
+                table = Table(title="Subdomains Found", show_header=True, header_style="bold magenta")
+                table.add_column("Subdomain", style=ui_styles.UIStyles.SUBDOMAIN, overflow="fold")
+                for subdomain in subdomains:
+                    table.add_row(subdomain)
+                console.print(table)
+            else:
+                for subdomain in subdomains:
+                    print(subdomain)
     return subdomains
 
 
 def interactive():
+    global console
     args = parse_args()
     domain = args.domain
     threads = args.threads
@@ -998,8 +1099,14 @@ def interactive():
     engines = args.engines
     if verbose or verbose is None:
         verbose = True
+    
+    # Initialize Rich console
     if args.no_color:
         no_color()
+    else:
+        console = Console(force_terminal=True)
+        ui_styles.set_console(console)
+    
     banner()
     res = main(domain, threads, savefile, ports, silent=False, verbose=verbose, enable_bruteforce=enable_bruteforce, engines=engines)
 

@@ -4,7 +4,7 @@ setup(
     name='Sublist3r',
     version='1.0',
     python_requires='>=3.12',
-    install_requires=['dnspython', 'requests'],
+    install_requires=['dnspython', 'requests', 'rich'],
     packages=find_packages()+['.'],
     include_package_data=True,
     url='https://github.com/vuhung16au/Sublist3r',
