@@ -29,7 +29,7 @@ Sublist3r enumerates subdomains using:
    ```
    This will:
    - Create a virtual environment (`.venv`) with Python 3.12
-   - Install all required dependencies from `requirements.txt`
+   - Install all required dependencies from `pyproject.toml`
 
 3. **Activate the virtual environment** (if not already active):
    ```bash
@@ -142,7 +142,7 @@ make test
 
 This will run two test commands:
 - `python sublist3r.py -v -d google.com`
-- `python sublist3r.py -v -d http://localhost:3000/`
+- `python sublist3r.py -v -d example.com`
 
 ## Tips and Best Practices
 

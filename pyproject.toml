@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Sublist3r (vh)"
+version = "0.0.1"
+description = "Subdomains enumeration tool for penetration testers and red teamings"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dnspython",
+    "requests",
+]
+
+[project.scripts]
+sublist3r = "sublist3r:interactive"
+

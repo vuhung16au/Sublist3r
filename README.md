@@ -17,24 +17,26 @@ git clone https://github.com/aboul3la/Sublist3r.git
 
 ## Recommended Python Version:
 
-Sublist3r currently supports **Python 2** and **Python 3**.
-
-* The recommended version for Python 2 is **2.7.x**
-* The recommended version for Python 3 is **3.4.x**
+Sublist3r requires **Python 3.12 or higher**.
 
 ## Dependencies:
 
-Sublist3r depends on the `requests`, `dnspython` and `argparse` python modules.
+Sublist3r depends on the `requests` and `dnspython` python modules.
 
-These dependencies can be installed using the requirements file:
+These dependencies can be installed using the project's `pyproject.toml`:
 
 - Installation on Windows:
 ```
-c:\python27\python.exe -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 - Installation on Linux
 ```
-sudo pip install -r requirements.txt
+pip install -e .
+```
+
+Or using the Makefile (recommended):
+```
+make setup-env
 ```
 
 Alternatively, each module can be installed independently as shown below.
@@ -78,22 +80,7 @@ sudo apt-get install python-dnspython
 sudo pip install dnspython
 ```
 
-#### argparse Module
-
-- Install for Ubuntu/Debian:
-```
-sudo apt-get install python-argparse
-```
-
-- Install for Centos/Redhat:
-```
-sudo yum install python-argparse
-``` 
-
-- Install using pip:
-```
-sudo pip install argparse
-```
+**Note:** `argparse` is included in Python 3.12+ standard library and does not need to be installed separately.
 
 **for coloring in windows install the following libraries**
 ```

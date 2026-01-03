@@ -6,5 +6,11 @@ __pycache__/
 *.so
 .Python
 
+# Build artifacts (setuptools/pyproject.toml)
+dist/
+build/
+*.egg-info/
+.eggs/
+
 # Project specific
 Prompt.md

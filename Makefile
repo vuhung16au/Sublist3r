@@ -12,7 +12,7 @@ setup-env:
 	python3.12 -m venv .venv
 	@echo "Installing requirements..."
 	.venv/bin/pip install --upgrade pip
-	.venv/bin/pip install -r requirements.txt
+	.venv/bin/pip install -e .
 	@echo "Virtual environment created and requirements installed!"
 
 test:
