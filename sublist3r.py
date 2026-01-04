@@ -11,9 +11,11 @@ import argparse
 import multiprocessing
 import threading
 import socket
+import time
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
+from rich.panel import Panel
 import ui_styles
 import urllib.parse as urlparse
 
@@ -193,6 +195,95 @@ class portscan():
             t.start()
 
 
+def format_elapsed_time(seconds):
+    """Format elapsed time in a human-readable format.
+    
+    Args:
+        seconds: Elapsed time in seconds (float)
+    
+    Returns:
+        Formatted time string
+    """
+    if seconds < 1:
+        return f"{seconds:.2f} seconds"
+    elif seconds < 60:
+        return f"{int(round(seconds))} seconds"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        secs = int(round(seconds % 60))
+        return f"{minutes} minute{'s' if minutes != 1 else ''} {secs} second{'s' if secs != 1 else ''}"
+    else:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(round(seconds % 60))
+        return f"{hours} hour{'s' if hours != 1 else ''} {minutes} minute{'s' if minutes != 1 else ''} {secs} second{'s' if secs != 1 else ''}"
+
+
+def display_summary(total_subdomains, search_count, bruteforce_count, engines_used, elapsed_time, engine_names, enable_bruteforce, verbose, silent):
+    """Display enumeration summary statistics.
+    
+    Args:
+        total_subdomains: Total unique subdomains found
+        search_count: Number of subdomains from search engines
+        bruteforce_count: Number of subdomains from bruteforce
+        engines_used: Number of engines used
+        elapsed_time: Elapsed time in seconds
+        engine_names: List of engine names
+        enable_bruteforce: Whether bruteforce was enabled
+        verbose: Whether verbose mode is enabled
+        silent: Whether silent mode is enabled
+    """
+    # Only display if verbose and not silent
+    if not verbose or silent:
+        return
+    
+    # Format elapsed time
+    time_str = format_elapsed_time(elapsed_time)
+    
+    # Build summary content
+    summary_lines = [
+        f"Total Subdomains Found: {total_subdomains}",
+        f"Engines Used: {engines_used}",
+        f"Scan Time: {time_str}",
+        "",
+        "Breakdown by Source:",
+        f"  • Search Engines: {search_count} subdomain{'s' if search_count != 1 else ''}"
+    ]
+    
+    # Add bruteforce line if enabled
+    if enable_bruteforce:
+        summary_lines.append(f"  • Bruteforce: {bruteforce_count} subdomain{'s' if bruteforce_count != 1 else ''}")
+    
+    summary_lines.append("")
+    
+    # Add engine names
+    if engine_names:
+        engine_names_sorted = sorted(engine_names)
+        engine_str = ", ".join(engine_names_sorted)
+        summary_lines.append(f"Engines: {engine_str}")
+    else:
+        summary_lines.append("Engines: None")
+    
+    # Join all lines
+    summary_content = "\n".join(summary_lines)
+    
+    # Display using Rich Panel
+    if console:
+        panel = Panel(
+            summary_content,
+            title="[bold magenta]Enumeration Summary[/bold magenta]",
+            border_style="magenta"
+        )
+        console.print(panel)
+    else:
+        # Fallback for non-Rich console
+        print("\n" + "=" * 60)
+        print("Enumeration Summary")
+        print("=" * 60)
+        print(summary_content)
+        print("=" * 60 + "\n")
+
+
 def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, engines, config_path=None):
     bruteforce_list = set()
     search_list = set()
@@ -220,6 +311,9 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
         domain = 'http://' + domain
 
     parsed_domain = urlparse.urlparse(domain)
+
+    # Start timing for enumeration
+    start_time = time.time()
 
     if not silent:
         if console:
@@ -260,6 +354,9 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
 
     # Start the engines enumeration with progress tracking
     enums = [enum(domain, [], q=subdomains_queue, silent=silent, verbose=verbose) for enum in chosenEnums]
+    
+    # Extract engine names for summary
+    engine_names = [enum.engine_name for enum in enums]
     
     if not silent and console:
         with Progress(
@@ -307,6 +404,14 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
         json_output = False
         bruteforce_list = subbrute.print_target(parsed_domain.netloc, record_type, subs, resolvers, process_count, output, json_output, search_list, verbose)
 
+    # End timing for enumeration
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    # Count subdomains by source BEFORE union (for accurate breakdown)
+    search_count = len(search_list)
+    bruteforce_count = len(bruteforce_list) if enable_bruteforce else 0
+
     subdomains = search_list.union(bruteforce_list)
 
     if subdomains:
@@ -330,6 +435,19 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
             ports = ports.split(',')
             pscan = portscan(subdomains, ports)
             pscan.run()
+            
+            # Display summary after port scan (only in verbose mode)
+            display_summary(
+                total_subdomains=len(subdomains),
+                search_count=search_count,
+                bruteforce_count=bruteforce_count,
+                engines_used=len(enums),
+                elapsed_time=elapsed_time,
+                engine_names=engine_names,
+                enable_bruteforce=enable_bruteforce,
+                verbose=verbose,
+                silent=silent
+            )
 
         elif not silent:
             # Display subdomains in a Rich table
@@ -342,6 +460,32 @@ def main(domain, threads, savefile, ports, silent, verbose, enable_bruteforce, e
             else:
                 for subdomain in subdomains:
                     print(subdomain)
+        
+        # Display summary (only in verbose mode)
+        display_summary(
+            total_subdomains=len(subdomains),
+            search_count=search_count,
+            bruteforce_count=bruteforce_count,
+            engines_used=len(enums),
+            elapsed_time=elapsed_time,
+            engine_names=engine_names,
+            enable_bruteforce=enable_bruteforce,
+            verbose=verbose,
+            silent=silent
+        )
+    else:
+        # No subdomains found, but still show summary if verbose
+        display_summary(
+            total_subdomains=0,
+            search_count=search_count,
+            bruteforce_count=bruteforce_count,
+            engines_used=len(enums),
+            elapsed_time=elapsed_time,
+            engine_names=engine_names,
+            enable_bruteforce=enable_bruteforce,
+            verbose=verbose,
+            silent=silent
+        )
     return subdomains
 
 
